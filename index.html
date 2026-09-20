@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Analytics Dashboard</title>
+  
+  <!-- ─────────────────────────────────────────────────────────────────────
+       EXTERNAL DEPENDENCIES
+       ───────────────────────────────────────────────────────────────────── -->
+  
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  
+  <!-- Material Design Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  
+  <!-- Google Fonts for premium typography -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- ─────────────────────────────────────────────────────────────────────
+       GLOBAL CSS VARIABLES & THEMING
+       ───────────────────────────────────────────────────────────────────── -->
+  
+  <style>
+    /**
+     * ═══════════════════════════════════════════════════════════════════════
+     * ROOT VARIABLES - Light Mode (Default)
+     * ═══════════════════════════════════════════════════════════════════════
+     * All colors, spacing, and shadows are defined as CSS variables here
+     * for easy dark mode switching.
+     */
+    :root {
+      /* ─ COLOR PALETTE */
+      --color-primary: #3b82f6;
+      --color-primary-light: #60a5fa;
+      --color-primary-dark: #1e40af;
+      --color-secondary: #8b5cf6;
+      --color-secondary-light: #a78bfa;
+      
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --color-info: #06b6d4;
+      
+      /* ─ BACKGROUND & SURFACE */
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-bg-tertiary: #f3f4f6;
+      
+      /* ─ TEXT & BORDERS */
+      --color-text: #1f2937;
+      --color-text-secondary: #6b7280;
+      --color-text-tertiary: #9ca3af;
+      --color-border: #e5e7eb;
+      
+      /* ─ CARDS & SURFACES */
+      --color-card-bg: #ffffff;
+      --color-card-border: #e5e7eb;
+      --color-card-shadow: rgba(0, 0, 0, 0.08);
+      
+      /* ─ TYPOGRAPHY */
+      --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-family-display: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      
+      /* ─ SPACING SCALE (8px base) */
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      /* ─ BORDER RADIUS */
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.875rem;
+      --radius-xl: 1.25rem;
+      
+      /* ─ SHADOWS */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      /* ─ TRANSITIONS */
+      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /**
+     * ═══════════════════════════════════════════════════════════════════════
+     * DARK MODE OVERRIDES
+     * ═══════════════════════════════════════════════════════════════════════
+     * Applied when [data-theme="dark"] is set on the body element.
+     */
+    [data-theme="dark"] {
+      --color-bg: #111827;
+      --color-bg-secondary: #1f2937;
+      --color-bg-tertiary: #374151;
+      
+      --color-text: #f3f4f6;
+      --color-text-secondary: #d1d5db;
+      --color-text-tertiary: #9ca3af;
+      --color-border: #374151;
+      
+      --color-card-bg: #1f2937;
+      --color-card-border: #374151;
+      --color-card-shadow: rgba(0, 0, 0, 0.3);
+      
+      --color-primary: #60a5fa;
+      --color-primary-light: #93c5fd;
+      --color-secondary-light: #d8b4fe;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       BASE STYLES & RESET
+       ───────────────────────────────────────────────────────────────────── */
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    body {
+      font-family: var(--font-family-base);
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      transition: background-color var(--transition-base), color var(--transition-base);
+      line-height: 1.5;
+      font-size: 0.9375rem;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       LAYOUT - MAIN GRID STRUCTURE
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 0;
+      height: 100vh;
+      background: var(--color-bg);
+    }
+    
+    header.top-header {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      background: var(--color-card-bg);
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--spacing-md) var(--spacing-xl);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-lg);
+      z-index: 100;
+    }
+    
+    aside.sidebar {
+      grid-column: 1;
+      grid-row: 2;
+      background: var(--color-card-bg);
+      border-right: 1px solid var(--color-border);
+      padding: var(--spacing-lg);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+    
+    main.main-content {
+      grid-column: 2;
+      grid-row: 2;
+      padding: var(--spacing-xl);
+      overflow-y: auto;
+      background: var(--color-bg);
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       RESPONSIVE DESIGN
+       ───────────────────────────────────────────────────────────────────── */
+    
+    @media (max-width: 1024px) {
+      .dashboard-container {
+        grid-template-columns: 1fr;
+      }
+      
+      aside.sidebar {
+        grid-column: 1 / -1;
+        grid-row: auto;
+        padding: var(--spacing-md);
+        max-height: 200px;
+        overflow-x: auto;
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+      }
+      
+      main.main-content {
+        grid-column: 1;
+        padding: var(--spacing-md);
+      }
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       HEADER COMPONENTS
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      flex: 1;
+    }
+    
+    .logo {
+      font-family: var(--font-family-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       SEARCH BAR - GLOBAL SEARCH
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .search-wrapper {
+      position: relative;
+      flex: 1;
+      max-width: 400px;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      padding-left: var(--spacing-lg);
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      font-family: var(--font-family-base);
+      color: var(--color-text);
+      font-size: 0.9rem;
+      transition: all var(--transition-base);
+    }
+    
+    .search-input::placeholder {
+      color: var(--color-text-tertiary);
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: var(--color-card-bg);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: var(--spacing-md);
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-tertiary);
+      pointer-events: none;
+      font-size: 1.25rem;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       THEME TOGGLE SWITCH
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .theme-toggle-wrapper {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 56px;
+      height: 28px;
+      background: var(--color-bg-secondary);
+      border: 2px solid var(--color-border);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    
+    .toggle-switch.active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      transition: left var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .toggle-switch.active .toggle-slider {
+      left: 28px;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       SIDEBAR FILTERS
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .filter-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+    
+    .filter-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-tertiary);
+    }
+    
+    .filter-select {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      color: var(--color-text);
+      font-family: var(--font-family-base);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all var(--transition-base);
+    }
+    
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: var(--color-card-bg);
+    }
+    
+    .filter-select:hover {
+      border-color: var(--color-primary);
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       KPI CARDS - KEY PERFORMANCE INDICATORS
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-2xl);
+    }
+    
+    .kpi-card {
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-card-border);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+      transition: all var(--transition-base);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--transition-base);
+    }
+    
+    .kpi-card:hover {
+      box-shadow: var(--shadow-lg);
+      border-color: var(--color-primary);
+    }
+    
+    .kpi-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .kpi-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .kpi-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      font-family: var(--font-family-display);
+      color: var(--color-text);
+      line-height: 1;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .kpi-subtext {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+    }
+    
+    .kpi-icon {
+      position: absolute;
+      top: var(--spacing-lg);
+      right: var(--spacing-lg);
+      font-size: 2rem;
+      opacity: 0.1;
+      transition: opacity var(--transition-base);
+    }
+    
+    .kpi-card:hover .kpi-icon {
+      opacity: 0.2;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       SECTION TITLES & TYPOGRAPHY
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-family-display);
+      color: var(--color-text);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 28px;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-secondary));
+      border-radius: 2px;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       CHART CONTAINERS
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-2xl);
+    }
+    
+    .chart-card {
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-card-border);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .chart-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    canvas {
+      max-width: 100%;
+      height: auto;
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       WHAT-IF ANALYSIS SECTION
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .whatif-section {
+      background: var(--color-card-bg);
+      border: 1px solid var(--color-card-border);
+      border-radius: var(--radius-xl);
+      padding: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .whatif-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-2xl);
+    }
+    
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+    
+    .slider-label {
+      font-weight: 600;
+      color: var(--color-text);
+      font-size: 1rem;
+    }
+    
+    .slider-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+    
+    /* Custom range slider styling */
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--color-bg-secondary);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: all var(--transition-base);
+    }
+    
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+      cursor: pointer;
+      border: none;
+      box-shadow: var(--shadow-md);
+      transition: all var(--transition-base);
+    }
+    
+    input[type="range"]::-moz-range-thumb:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       OUTPUT BADGES & METRICS
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-lg);
+    }
+    
+    .output-badge {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-md);
+      text-align: center;
+      transition: all var(--transition-base);
+    }
+    
+    .output-badge:hover {
+      border-color: var(--color-primary);
+      background: var(--color-bg-tertiary);
+    }
+    
+    .output-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .output-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      font-family: var(--font-family-display);
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       LOADING STATES
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--color-border);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-2xl);
+      gap: var(--spacing-md);
+      color: var(--color-text-secondary);
+    }
+    
+    /* ─────────────────────────────────────────────────────────────────────
+       UTILITY CLASSES
+       ───────────────────────────────────────────────────────────────────── */
+    
+    .hidden {
+      display: none;
+    }
+    
+    .scrollbar-hidden::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .scrollbar-hidden {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+
+<body data-theme="light">
+  <!-- ═════════════════════════════════════════════════════════════════════
+       MAIN DASHBOARD CONTAINER
+       ════════════════════════════════════════════════════════════════════= -->
+  
+  <div class="dashboard-container">
+    
+    <!-- ─────────────────────────────────────────────────────────────────
+         TOP HEADER - Logo, Search, Theme Toggle
+         ───────────────────────────────────────────────────────────────── -->
+    
+    <header class="top-header">
+      <div class="header-left">
+        <div class="logo">
+          <span class="material-icons">analytics</span>
+          HR Analytics
+        </div>
+        
+        <!-- Global Search Bar -->
+        <div class="search-wrapper">
+          <span class="material-icons search-icon">search</span>
+          <input 
+            type="text" 
+            id="globalSearch" 
+            class="search-input" 
+            placeholder="Search employees, departments..."
+          >
+        </div>
+      </div>
+      
+      <div class="header-right">
+        <!-- Theme Toggle Switch -->
+        <div class="theme-toggle-wrapper">
+          <span class="material-icons" style="font-size: 1.25rem; color: var(--color-text-secondary);">light_mode</span>
+          <div id="themeToggle" class="toggle-switch">
+            <div class="toggle-slider"></div>
+          </div>
+          <span class="material-icons" style="font-size: 1.25rem; color: var(--color-text-secondary);">dark_mode</span>
+        </div>
+      </div>
+    </header>
+    
+    <!-- ─────────────────────────────────────────────────────────────────
+         SIDEBAR - Cascading Filters
+         ───────────────────────────────────────────────────────────────── -->
+    
+    <aside class="sidebar">
+      <!-- Department Filter -->
+      <div class="filter-section">
+        <label class="filter-title">Department</label>
+        <select id="deptFilter" class="filter-select">
+          <option value="">All Departments</option>
+        </select>
+      </div>
+      
+      <!-- Job Role Filter -->
+      <div class="filter-section">
+        <label class="filter-title">Job Role</label>
+        <select id="roleFilter" class="filter-select">
+          <option value="">All Roles</option>
+        </select>
+      </div>
+      
+      <!-- Date Range Filter -->
+      <div class="filter-section">
+        <label class="filter-title">Date Range</label>
+        <input 
+          type="date" 
+          id="dateStart" 
+          class="filter-select"
+          title="Start Date"
+        >
+        <input 
+          type="date" 
+          id="dateEnd" 
+          class="filter-select"
+          title="End Date"
+        >
+      </div>
+      
+      <!-- Reset Button -->
+      <button 
+        id="resetFilters" 
+        style="
+          width: 100%;
+          padding: var(--spacing-md);
+          background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+          color: white;
+          border: none;
+          border-radius: var(--radius-md);
+          font-weight: 600;
+          cursor: pointer;
+          transition: all var(--transition-base);
+          margin-top: auto;
+        "
+        onmouseover="this.style.opacity='0.9'; this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'"
+      >
+        <span class="material-icons" style="vertical-align: middle; font-size: 1.2rem;">refresh</span>
+        Reset Filters
+      </button>
+    </aside>
+    
+    <!-- ─────────────────────────────────────────────────────────────────
+         MAIN CONTENT AREA
+         ───────────────────────────────────────────────────────────────── -->
+    
+    <main class="main-content">
+      
+      <!-- Loading State -->
+      <div id="loadingState" class="loading-container">
+        <div class="loading-spinner"></div>
+        <span>Loading dashboard data...</span>
+      </div>
+      
+      <!-- Dashboard Content (Hidden during load) -->
+      <div id="dashboardContent" class="hidden">
+        
+        <!-- ════════════════════════════════════════════════════════════════
+             KPI SUMMARY CARDS
+             ════════════════════════════════════════════════════════════════ -->
+        
+        <div class="kpi-grid">
+          <!-- Headcount Card -->
+          <div class="kpi-card">
+            <div class="kpi-label">Active Headcount</div>
+            <div class="kpi-value" id="kpiHeadcount">0</div>
+            <div class="kpi-subtext">Total active employees</div>
+            <span class="material-icons kpi-icon">people</span>
+          </div>
+          
+          <!-- Attrition Rate Card -->
+          <div class="kpi-card">
+            <div class="kpi-label">Attrition Rate</div>
+            <div class="kpi-value" id="kpiAttrition">0%</div>
+            <div class="kpi-subtext">Employees who left</div>
+            <span class="material-icons kpi-icon">trending_down</span>
+          </div>
+          
+          <!-- Turnover Cost Card -->
+          <div class="kpi-card">
+            <div class="kpi-label">Turnover Cost</div>
+            <div class="kpi-value" id="kpiTurnoverCost">$0</div>
+            <div class="kpi-subtext">Financial impact</div>
+            <span class="material-icons kpi-icon">attach_money</span>
+          </div>
+          
+          <!-- Regrettable Attrition Card -->
+          <div class="kpi-card">
+            <div class="kpi-label">Regrettable Attrition</div>
+            <div class="kpi-value" id="kpiRegrettable">0</div>
+            <div class="kpi-subtext">High performers lost</div>
+            <span class="material-icons kpi-icon">star</span>
+          </div>
+        </div>
+        
+        <!-- ════════════════════════════════════════════════════════════════
+             CHARTS SECTION
+             ════════════════════════════════════════════════════════════════ -->
+        
+        <h2 class="section-title">Analytics</h2>
+        
+        <div class="chart-grid">
+          <!-- Attrition by Department Pie Chart -->
+          <div class="chart-card">
+            <div class="chart-title">Attrition by Department</div>
+            <canvas id="attritionByDeptChart"></canvas>
+          </div>
+          
+          <!-- Tenure Distribution Bar Chart -->
+          <div class="chart-card">
+            <div class="chart-title">Tenure Distribution</div>
+            <canvas id="tenureDistributionChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- ════════════════════════════════════════════════════════════════
+             WHAT-IF ANALYSIS SECTION
+             ════════════════════════════════════════════════════════════════ -->
+        
+        <h2 class="section-title">What-If Analysis</h2>
+        
+        <div class="whatif-section">
+          <div class="whatif-grid">
+            
+            <!-- Remote Work Adoption Slider -->
+            <div class="slider-container">
+              <div class="slider-label">Remote Work Adoption %</div>
+              <div class="slider-value" id="remoteWorkValue">0%</div>
+              <input 
+                type="range" 
+                id="remoteWorkSlider" 
+                min="0" 
+                max="100" 
+                value="0"
+                style="margin: var(--spacing-md) 0;"
+              >
+              <small style="color: var(--color-text-secondary);">
+                Increase in flexible work arrangements
+              </small>
+            </div>
+            
+            <!-- OT Reduction Slider -->
+            <div class="slider-container">
+              <div class="slider-label">OT Reduction %</div>
+              <div class="slider-value" id="otReductionValue">0%</div>
+              <input 
+                type="range" 
+                id="otReductionSlider" 
+                min="0" 
+                max="100" 
+                value="0"
+                style="margin: var(--spacing-md) 0;"
+              >
+              <small style="color: var(--color-text-secondary);">
+                Decrease in overtime hours
+              </small>
+            </div>
+            
+            <!-- Salary Increase Slider -->
+            <div class="slider-container">
+              <div class="slider-label">Salary Increase %</div>
+              <div class="slider-value" id="salaryIncreaseValue">0%</div>
+              <input 
+                type="range" 
+                id="salaryIncreaseSlider" 
+                min="0" 
+                max="15" 
+                step="0.5"
+                value="0"
+                style="margin: var(--spacing-md) 0;"
+              >
+              <small style="color: var(--color-text-secondary);">
+                Percentage increase in base salaries
+              </small>
+            </div>
+          </div>
+          
+          <!-- Output Metrics Grid -->
+          <div class="output-grid">
+            <div class="output-badge">
+              <div class="output-label">Projected Attrition Reduction</div>
+              <div class="output-value" id="projectedReduction">0%</div>
+            </div>
+            
+            <div class="output-badge">
+              <div class="output-label">Cost Savings (Annual)</div>
+              <div class="output-value" id="costSavings">$0</div>
+            </div>
+            
+            <div class="output-badge">
+              <div class="output-label">ROI</div>
+              <div class="output-value" id="roi">0%</div>
+            </div>
+            
+            <div class="output-badge">
+              <div class="output-label">Cost per Employee</div>
+              <div class="output-value" id="costPerEmployee">$0</div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </main>
+    
+  </div>
